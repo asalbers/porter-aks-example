@@ -40,4 +40,5 @@ jobs:
           password: ${{ secrets.GHCR_PASSWORD }}
       - name: Porter publish to ghcr.io
         run: |
+          porter mixin install az
           porter publish --verbosity info
