@@ -1,0 +1,141 @@
+schemaVersion: 1.0.0
+name: porter-aks-deploy
+version: 0.1.0
+description: "An example Porter configuration"
+
+registry: "ghcr.io/asalbers"
+
+mixins:
+  - exec
+  - az # https://github.com/getporter/az-mixin
+
+# Define the steps that should execute when the bundle is installed
+install:
+  - az:
+      description: "Azure CLI login"
+      arguments:
+        - login
+      suppress-output: true
+      flags:
+        service-principal:
+        username: ${ bundle.credentials.AZURE_CLIENT_ID }
+        password: ${ bundle.credentials.AZURE_SP_PASSWORD }
+        tenant: ${ bundle.credentials.AZURE_TENANT }
+  
+  - az: # setting the subscription
+      description: "Setting the Azure subscription..."
+      arguments: 
+        - account
+        - set 
+      flags:
+        subscription: ${ bundle.credentials.AZURE_SUB_ID }
+  
+  - az:
+      description: "Creating resource group..."
+      arguments:
+        - group
+        - create
+      suppress-output: true
+      flags:
+        name: ${ bundle.parameters.rg }
+        location: eastus2
+  
+  - az:
+      description: "Creating aks cluster..."
+      arguments:
+        - aks 
+        - create 
+      suppress-output: true
+      flags:
+        name: ${ bundle.parameters.aks_name }
+        resource-group: ${ bundle.parameters.rg }
+        kubernetes-version: ${ bundle.parameters.k8s_version }
+        node-count: 1
+        generate-ssh-keys:
+  
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - install
+
+
+# Define the steps that should execute when the bundle is upgraded
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+# Define the steps that should execute when the bundle is uninstalled
+uninstall:
+  - az:
+      description: "Azure CLI login"
+      arguments:
+        - login
+      suppress-output: true
+      flags:
+        service-principal:
+        username: ${ bundle.credentials.AZURE_CLIENT_ID }
+        password: ${ bundle.credentials.AZURE_SP_PASSWORD }
+        tenant: ${ bundle.credentials.AZURE_TENANT }
+  
+  - az:
+      description: "Setting the Azure subscription...."
+      suppress-output: true
+      arguments: 
+        - "account" 
+        - "set" 
+      flags:
+        subscription: ${ bundle.credentials.AZURE_SUB_ID }
+
+  - az: 
+      description: "Deleting the cluster..."
+      arguments:
+        - aks
+        - delete
+      flags:
+        name: ${ bundle.parameters.aks_name }
+        resource-group: ${ bundle.parameters.rg }
+        yes:
+  
+  - az:
+      description: "Deleting resource group..."
+      group:
+        name: ${ bundle.parameters.rg }
+
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+
+credentials:
+  - name: AZURE_CLIENT_ID
+    description: "The client id for the service principal used to automate the bundle's actions."
+    env: AZURE_CLIENT_ID
+  - name: AZURE_SP_PASSWORD
+    description: "The service principal password that is used to log into Azure inside the bundle."
+    env: AZURE_SP_PASSWORD
+  - name: AZURE_TENANT
+    description: "The service principal password that is used to log into Azure inside the bundle."
+    env: AZURE_TENANT
+  - name: AZURE_SUB_ID
+    description: "The Azure subscription into which to deploy."
+    env: AZURE_SUB_ID
+
+
+parameters:
+  - name: aks_name
+    description: "cluster name"
+    type: string 
+    default: "porter-aks"
+  - name: rg
+    description: "resource group"
+    type: string
+    default: "testrg"
+  - name: k8s_version
+    description: "kubernetes version"
+    type: string
+    default: "1.24.6"

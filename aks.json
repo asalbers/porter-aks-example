@@ -1,0 +1,32 @@
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "aks-porter",
+    "credentials": [
+        {
+            "name": "AZURE_CLIENT_ID",
+            "source": {
+                "env": "AZURE_CLIENT_ID"
+            }
+        },
+        {
+            "name": "AZURE_SP_PASSWORD",
+            "source": {
+                "env": "AZURE_SP_PASSWORD"
+            }
+        },
+        {
+            "name": "AZURE_TENANT",
+            "source": {
+                "env": "AZURE_TENANT"
+            }
+        },
+        {
+            "name": "AZURE_SUB_ID",
+            "source": {
+                "env": "AZURE_SUB_ID"
+            }
+        }
+
+    ]
+}
